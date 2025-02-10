@@ -1,0 +1,198 @@
+html{
+    margin: 0;
+    display: block;
+}
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: linear-gradient(to right, yellow, green);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    
+
+}
+.titulo{
+    top: 1;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+.box{   
+    margin: 0 auto;
+    display: block;
+    color: aliceblue;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 15px;
+    width: 70dvh;
+}
+fieldset{
+    border: 3px solid rgb(41, 6, 199);
+}
+legend{
+    border: 1px solid darkgoldenrod;
+    padding: 10px;
+    text-align: center;
+    background-color: darkgoldenrod;
+    border-radius: 10px;
+    
+}
+label{
+    background-color: transparent;
+    border-radius: none;
+    border-bottom: none;
+}
+.inputBox{
+    position: relative;
+
+}
+.inputUser{
+    background: none;
+    border: none;
+    border-bottom: 1px solid white;
+    outline: none;
+    color: aliceblue;
+    font-size: 15px;
+    width: 100%;
+    letter-spacing: 2px;
+}
+.labelinput{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    pointer-events: none;
+    transition: .5s;
+}
+.inputUser:focus ~ .labelinput, .inputUser:valid ~ .labelinput {
+    top: -20px;
+    font-size: 12px;
+    color:rgb(41, 6, 199);
+}
+#dn{
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+    outline: none;
+    font-size: 15px;
+
+}
+#submit{
+    background-image: linear-gradient(45deg, rgb(1, 250, 250), rgb(116, 116, 22) );
+    width: 100%;
+    border: none;
+    padding: 15px;
+    color: rgb(255, 255, 255);
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 12px;
+}
+#profissao{
+    border: none;
+    color: black;
+    border-radius: 10px;
+
+}
+select {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(41, 6, 199, 0.7);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 15px;
+    color: black;
+    width: 100%;
+    cursor: pointer;
+}
+
+select:hover {
+    border-color: rgba(41, 6, 199, 1);
+}
+
+@media (max-width: 600px) {
+    
+    .box{
+     color: aliceblue;
+     position: absolute;
+     top: 70%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     background-color: rgba(0, 0, 0, 0.6);
+     padding: 15px;
+     border-radius: 15px;
+     width: 80%;
+    }
+    
+    
+}
+#commentary{
+    width: 50%;
+    
+}
+nav {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%; /* Para ocupar toda a largura */
+    box-sizing: border-box; /* Para incluir o padding na largura total */
+    margin-bottom: 20px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex; /* Alinha os itens horizontalmente */
+    justify-content: space-around; /* Espaço igual entre os itens */
+}
+
+nav ul li a {
+    color: aliceblue;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #32a6ff; /* Cor de destaque ao passar o mouse */
+}
+
+#controle-colaboradores {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+    color: aliceblue;
+    width: 100%; /* Para ocupar toda a largura */
+    box-sizing: border-box; /* Para incluir o padding na largura total */
+}
+
+#controle-colaboradores h2 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%; /* Tabela ocupa toda a largura */
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: rgba(41, 6, 199, 0.8);
+}
+
+table tr:hover {
+    background-color: rgba(116, 116, 22, 0.5); /* Cor de destaque ao passar o mouse */
+}
+
+table td a {
+    color: #32a6ff; /* Cor dos links nas ações */
+    text-decoration: none;
+}
+
+table td a:hover {
+    text-decoration: underline; /* Sublinhar ao passar o mouse */
+}

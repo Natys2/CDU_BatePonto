@@ -1,0 +1,385 @@
+Projeto Encerrado por falta de organização da empresa contratante(Sera Ultilizado pra Crescimento profissional!)
+
+<?php 
+session_start();
+include 'db_connection.php'; 
+include 'session_check.php';   
+
+
+$email = $_SESSION['email'] ?? '';
+$filial = $_SESSION['filial'] ?? '';  
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../img/icon.png" type="image/x-icon">
+    <script src="src_s/syscol.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .titulo img {
+            max-width: 100%;
+            height: auto;
+        }
+        .forms {
+            margin-top: 20px;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        fieldset {
+            border: none;
+        }
+        legend {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .inputUser {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #colaboradoresList {
+            margin-top: 20px;
+        }
+        #colaboradoresList ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #colaboradoresList li {
+            margin: 5px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .alterar-button {
+            background: #ffc107;
+            color: black;
+        }
+        .alterar-button:hover {
+            background: #e0a800;
+        }
+        .presenca-button {
+            background: #28a745;
+            color: white;
+        }
+        .presenca-button:hover {
+            background: #218838;
+        }
+        .ausencia-button {
+            background: #dc3545;
+            color: white;
+        }
+        .ausencia-button:hover {
+            background: #c82333;
+        }
+        .adicionar-form {
+            margin-top: 20px;
+        }
+        #formularioAusencia {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 100px;
+        }
+        #logoutButton {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px;
+            background-color: #28a745; 
+            color: white;
+            border-radius: 5px;
+            display: none;
+            font-size: 16px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: auto;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .notification.error {
+            background-color: #dc3545; 
+        }
+
+        .notification.show {
+            display: block;
+            animation: fadeInOut 4s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                top: 0;
+            }
+            10% {
+                opacity: 1;
+                top: 20px;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                top: 0;
+            }
+        }
+    </style>
+    <title>ABSOLUTA</title>
+</head>
+<body>
+    <!--Notificação -->
+    <div id="notification" class="notification"></div>
+
+    <div class="titulo">
+        <img src="meta.png" alt="">
+    </div>
+    <section class="forms">
+        <div class="box">
+            <form id="registroForm" method="post">
+                <fieldset>
+                    <legend><b>Bate Ponto - Líderes | Olá Novamente, Líder da filial <?php echo $filial; ?>!</b></legend>
+                    <br>
+                    <div>
+                        <label for="filial">Filial:</label>
+                        <input type="text" id="filial" name="filial" class="inputUser" required>
+                    </div>
+                    <div>
+                        <div id="loading" style="display: none;">Carregando...</div>
+                        <button type="button" id="submit" onclick="fetchColaboradores()">Confirmar</button>
+                    </div>
+                    <div id="colaboradoresList"></div>
+                </fieldset>
+            </form>
+            <form action="logout.php" method="post">
+                <button type="submit" id="logoutButton">Sair</button>
+            </form>
+        </div>
+    </section>
+
+    <div id="formularioAusencia">    
+    </div>
+
+    <script>
+        let filial = '<?php echo $filial; ?>'; // Filial que vem do PHP
+
+        function setLoading(isLoading) {
+            const submitButton = document.getElementById('submit');
+            const loadingText = document.getElementById('loading');
+
+            if (isLoading) {
+                submitButton.disabled = true;
+                loadingText.style.display = 'inline'; 
+            } else {
+                submitButton.disabled = false;
+                loadingText.style.display = 'none';  
+            }
+        }
+
+        function fetchColaboradores() {
+            const filialInput = document.getElementById('filial').value.trim().toLowerCase();
+
+            
+            if (filialInput !== filial.toLowerCase()) {
+                showNotification('Você não tem permissão para visualizar os colaboradores dessa filial.', true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'fetch');
+            formData.append('filial', filialInput);  
+
+            setLoading(true); 
+
+            fetch('./src/backend.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                setLoading(false); 
+                if (data.error) {
+                    showNotification(data.error, true);  
+                } else {
+                    showColaboradores(data.colaboradores);
+                }
+            })
+            .catch(error => {
+                setLoading(false); 
+                showNotification("Erro ao comunicar com o servidor.", true); 
+            });
+        }
+
+        function showColaboradores(colaboradores) {
+            const colaboradoresList = document.getElementById('colaboradoresList');
+            colaboradoresList.innerHTML = ''; 
+
+            if (!colaboradores || colaboradores.length === 0) {
+                colaboradoresList.innerHTML = '<p>Nenhum colaborador encontrado.</p>';
+                return;
+            }
+
+            const ul = document.createElement('ul');
+            colaboradores.forEach(colaborador => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${colaborador.nome} - ${colaborador.cargo}</span>
+                    <button type="button" class="presenca-button" onclick="marcarPresenca(${colaborador.id})">Presença</button>
+                    <button type="button" class="ausencia-button" onclick="marcarAusencia(${colaborador.id}, '${colaborador.nome}', '${filial}', '${colaborador.lider}')">Ausência</button>
+                `;
+                ul.appendChild(li);
+            });
+            colaboradoresList.appendChild(ul);
+        }
+
+        function marcarAusencia(id, nome, filial,) {
+            const formularioContainer = document.getElementById('formularioAusencia');
+            formularioContainer.innerHTML = `
+                <h3>Registrar Ausência</h3>
+                <form id="formAusencia">
+                    <p><strong>Colaborador:</strong> ${nome}</p>
+                    <p><strong>Data:</strong> ${getCurrentDate()}</p>
+                    <p><strong>Filial:</strong> ${filial}</p>
+                    <p><strong>Responsável:</strong>Lider Da Filial ${filial}</p>
+
+                    <label for="motivo">Motivo da Ausência:</label>
+                    <textarea id="motivo" name="motivo" required></textarea>
+
+                    <button type="submit">Registrar Ausência</button>
+                </form>
+            `;
+            formularioContainer.style.display = 'block';
+
+            // Centralizar o formulário na tela
+            formularioContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Adicionar o evento de envio do formulário
+            const form = document.getElementById('formAusencia');
+            form.onsubmit = function(event) {
+                event.preventDefault(); // Evitar o comportamento padrão de envio de formulário
+                const motivo = document.getElementById('motivo').value.trim();
+
+                if (!motivo) {
+                    showNotification("Motivo é obrigatório!", true); // Exibe erro de motivo
+                    return;
+                }
+
+                // Enviar a solicitação para registrar a ausência
+                registrarAusencia(id, motivo);
+            };
+        }
+
+        function registrarAusencia(id, motivo) {
+            var action = 'ausencia';
+            var faltas = 1;
+            var data = getCurrentDate(); 
+
+            var formData = new FormData();
+            formData.append('action', action);
+            formData.append('id', id);
+            formData.append('faltas', faltas);
+            formData.append('data_falta', data);
+            formData.append('motivo', motivo);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'src/get_inventariantes.php', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        showNotification("Ausência registrada com sucesso!"); 
+                        document.getElementById('formularioAusencia').style.display = 'none';
+                    } else {
+                        showNotification("Falha ao registrar ausência: " + response.error, true); 
+                    }
+                } else {
+                    showNotification("Erro ao comunicar com o servidor.", true); 
+                }
+            };
+            xhr.send(formData);
+        }
+
+        function getCurrentDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            
+            // Alterar a cor da notificação de acordo com o tipo
+            if (isError) {
+                notification.classList.add('error');
+            } else {
+                notification.classList.remove('error');
+            }
+
+            // Exibir notificação
+            notification.classList.add('show');
+
+            // Remover a notificação após 4 segundos
+            setTimeout(function() {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

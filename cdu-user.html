@@ -1,0 +1,411 @@
+<?php
+session_start();
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../img/icon.png" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .titulo img {
+            max-width: 100%;
+            height: auto;
+        }
+        .forms {
+            margin-top: 20px;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        fieldset {
+            border: none;
+        }
+        legend {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .inputUser {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .alterar-button {
+            background: #ffc107;
+            color: black;
+        }
+        .alterar-button:hover {
+            background: #e0a800;
+        }
+
+        #colaboradoresList {
+            margin-top: 20px;
+        }
+        #colaboradoresList ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #colaboradoresList li {
+            margin: 5px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .adicionar-form {
+            margin-top: 20px;
+            display: none; 
+        }
+        #ausenciasList ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #ausenciasList li {
+            margin: 5px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #logoutButton {
+            background-color: #dc3545; 
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;  
+        }
+        .ausencia-item {
+            background: #e9ecef;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .ausencia-info {
+            display: none;
+            margin-top: 10px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .toggle-icon {
+            font-size: 18px;
+            color: #007bff;
+        }
+    </style>
+    <title>ABSOLUTA</title>
+</head>
+<body>
+    <div class="titulo">
+        <img src="meta.png" alt="">
+    </div>
+    <section class="forms">
+        <div class="box">
+            <form id="registroForm" method="post" onsubmit="event.preventDefault();">
+                <fieldset>
+                    <legend><b>Controle De Inventariantes | Olá Novamente, Coordenador!</b></legend>
+                    <br>
+                    <div>
+                        <label for="filial">Filial:</label>
+                        <input type="text" id="filial" name="filial" class="inputUser" required>
+                    </div>
+                    <div>
+                        <button type="button" id="submit" onclick="fetchColaboradores()">Confirmar</button>
+                    </div>
+                    <div id="colaboradoresList"></div>
+
+                    <div class="adicionar-form" id="adicionarColaboradorForm">
+                        <h3>Adicionar Novo Colaborador</h3>
+                        <div>
+                            <label for="novoNome">Nome:</label>
+                            <input type="text" id="novoNome" class="inputUser">
+                        </div>
+                        <div>
+                            <label for="novoCargo">Cargo:</label>
+                            <input type="text" id="novoCargo" class="inputUser">
+                        </div>
+                        <div>
+                            <button type="button" onclick="adicionarColaborador()">Adicionar Colaborador</button>
+                        </div>
+                        <h2>Controle De Faltas</h2>
+                        <div id="ausenciasList" class="box"></div>
+                    </div>
+                </fieldset>
+            </form>
+            <form action="logout.php" method="post">
+                <button type="submit" id="logoutButton">Sair</button>
+            </form>
+        </div>
+    </section>
+    <script>
+    function fetchColaboradores() {
+        const filial = document.getElementById('filial').value;
+        const formData = new FormData();
+        formData.append('action', 'fetch');
+        formData.append('filial', filial);
+
+        fetch('./src/backend.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                showColaboradores(data.colaboradores);
+               
+                fetchAusencias(filial); 
+                document.getElementById('adicionarColaboradorForm').style.display = 'block';
+                document.getElementById('ausenciasList').style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+
+
+    function showColaboradores(colaboradores) {
+        const colaboradoresList = document.getElementById('colaboradoresList');
+        colaboradoresList.innerHTML = '';
+
+        if (colaboradores.length === 0) {
+            colaboradoresList.innerHTML = '<p>Nenhum colaborador encontrado.</p>';
+            return;
+        }
+
+        let colaboradoresHTML = '<h3>Colaboradores</h3><ul>';
+        colaboradores.forEach(colaborador => {
+            colaboradoresHTML += `
+                <li>
+                    ${colaborador.nome} (ID: ${colaborador.id}) - ${colaborador.cargo}
+                    <button class="alterar-button" onclick="updateColaborador(${colaborador.id}, '${colaborador.nome}', '${colaborador.cargo}')">Alterar</button>
+                    <button onclick="removeColaborador(${colaborador.id})">Remover</button>
+                </li>
+            `;
+        });
+        colaboradoresHTML += '</ul>';
+        colaboradoresList.innerHTML = colaboradoresHTML;
+    }
+
+
+    function updateColaborador(id, nome, cargo) {
+        const novoNome = prompt("Digite o novo nome:", nome);
+        const novoCargo = prompt("Digite o novo cargo:", cargo);
+
+        if (novoNome && novoCargo) {
+            const formData = new FormData();
+            formData.append('action', 'update');
+            formData.append('id', id);
+            formData.append('nome', novoNome);
+            formData.append('cargo', novoCargo);
+            formData.append('filial', document.getElementById('filial').value);
+
+            fetch('./src/backend.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.success);
+                    fetchColaboradores();
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+    }
+
+
+    function adicionarColaborador() {
+        const nome = document.getElementById('novoNome').value;
+        const cargo = document.getElementById('novoCargo').value;
+        const filial = document.getElementById('filial').value;
+
+        const formData = new FormData();
+        formData.append('action', 'add');
+        formData.append('nome', nome);
+        formData.append('cargo', cargo);
+        formData.append('filial', filial);
+
+        fetch('./src/backend.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.success);
+                fetchColaboradores();
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+
+    function removeColaborador(id) {
+        if (!confirm('Tem certeza que deseja remover esse colaborador?')) return;
+
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('id', id);
+
+        fetch('./src/backend.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.success);
+                fetchColaboradores();
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+
+    function fetchAusencias(filial) {
+        const formData = new FormData();
+        formData.append('action', 'fetchAusencias');
+        formData.append('filial', filial);
+
+        fetch('./src/backend.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                showAusencias(data.ausencias);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+
+    function showAusencias(ausencias) {
+        const ausenciasList = document.getElementById('ausenciasList');
+        ausenciasList.innerHTML = '';
+
+        if (ausencias.length === 0) {
+            ausenciasList.innerHTML = '<p>Nenhuma ausência registrada.</p>';
+            return;
+        }
+
+        const groupedAusencias = groupByDate(ausencias);
+
+        let ausenciasHTML = '<h3>Ausências dos Colaboradores</h3>';
+        
+        for (let date in groupedAusencias) {
+            ausenciasHTML += `
+                <div class="ausencia-date">
+                    <button class="toggle-btn" onclick="toggleAusencias('${date}')">
+                        <span class="date">${date}</span> <span class="arrow">►</span>
+                    </button>
+                    <div class="ausencias" id="ausencias-${date}" style="display: none;">
+                        <ul>
+                            ${groupedAusencias[date].map(ausencia => `
+                                <li>
+                                    <strong>${ausencia.nome}</strong> (Cargo: ${ausencia.cargo}) - Motivo: ${ausencia.motivo}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        ausenciasList.innerHTML = ausenciasHTML;
+    }
+
+    function groupByDate(ausencias) {
+        return ausencias.reduce((grouped, ausencia) => {
+            const date = ausencia.data_falta;
+            if (!grouped[date]) {
+                grouped[date] = [];
+            }
+            grouped[date].push(ausencia);
+            return grouped;
+        }, {});
+    }
+
+    function toggleAusencias(date) {
+        const element = document.getElementById(`ausencias-${date}`);
+        const arrow = element.previousElementSibling.querySelector('.arrow');
+        if (element.style.display === 'none') {
+            element.style.display = 'block';
+            arrow.textContent = '▼';
+        } else {
+            element.style.display = 'none';
+            arrow.textContent = '►'; 
+        }
+    }
+
+    function removerFalta(id) {
+        if (!id || !confirm('Tem certeza que deseja remover essa falta?')) return;
+
+        const formData = new FormData();
+        formData.append('action', 'removerFalta');
+        formData.append('id', id);
+
+        fetch('./src/backend.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.success);
+                fetchAusencias(document.getElementById('filial').value); // Atualiza a lista de ausências
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+
+    </script>
+</body>
+</html>
